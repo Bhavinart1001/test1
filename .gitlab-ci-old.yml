@@ -1,0 +1,41 @@
+image: node:latest
+SSH_PRIVATE_KEY: MIIEpAIBAAKCAQEAyUib9xOSkzBMuKSgBC7Vhnk/j66AA7jmLSOrHsGra1aneB9TMPpHeqxtexfhmt7ysUYe0uam8R5FUt44Q8MAyDnSjso9vDWiZiWu9lDiihr9BGhLA4UQcmj4/htcOdzR23a7llvjUvQLFLfd0TrmS6AnxM3EC2HGT0hiqglhXXWkRJXI1/ZFHr8zzNJDSNJYuFS5UJFeTwOdPq9ptlpr0NZnRAOnhEEOgtDLJS1IazJLoQDNArV4HNzTbOEeMP80zUmYHMLLyh7w38IvuJKTeq55HKfiv/mf6xZyTL7+C+G2n0HFzIwYW9b39pgTHICnOoF9usYpgf+IRQj2OhCmJwIDAQABAoIBAEERienLl/yhBoxCG8B+a2R3WcbXAGczpKU+/JiKvyGJ98VrSvdwUR8lEpdSVwo7vHT2WAyRp7IWuQ5a7BFrvpr7pkemtWJcbE1dLTxPVYyTwOtl06oln/V8XdG3go7qBaVOssGentQ4NETUU47J3Zzg/zot0oxjZTpICi0xrxoI1NzrZH+DMJlZk3Skczjw7/tbuTcd4tNGUPzvhkzxd/DbehVL8Nwi1QI/8GAnLAobyySeX9PyYXExwJRWeOo6aENtSzD66wImXbyaCvNfdexRlQj1Cv35BwBwJX1bHjioiMjxZYLn9398M635rEQlybeiZf8wg08lXrCoJTf/hSECgYEA67xrCOWKxPRI39C/kW3BvEjLd5cK0ZXEhJl0eJrdXDKGCO5fcbxhdjWM4SqHGa1bzq6IGe2ebpa7liQO0X6V6V3DrC6HBbx0U0O5I/WvlhoqEFD5CcCSv7/85hq6UZoJoJqIP8NaiuTdTOwVU36hzoWGP26n7TR63Q7QASpFaDkCgYEA2pYJJALbcL2pJC4NI1OhsrCY1mOr42VyLpLn0SEAWV8ycEHM1S9JjY8DEQ5NZBxbS1PYhBLpli4yO0DbnOX93enJ8aekAXFWnOWgT97kIlS0oVDE6aLqNgQCDuuQe/f2FXgMBh3pMSdfhH4iDcZNEsl5Otiw2aIqrFjqg1ScwV8CgYEAkEztJCwGrxtuBHtu2KHcBtp0mkb+G19XRWf+ENmTiR1wSMVJ7YBIFKkhDLAQtRoWacUSkPSQl9dzCqwV2g1nzMtVvO9aPZunhVSeXzHEgtiPSR+X4m1cJz5pm51e0ha9r+8IWifGI+GGydB2GX8Zoya/D9M3vg7y6qBnmV77z5kCgYAO+3Gs8jUwSQ+q1y03Wqgeo1QWfcZuU6m7333cK7LmbUv7vcbYZeFYvpCrPpu3XOo1A443n0Q7cvcmcI+c9XatGzUoRyFKqAYTwvl2AAULBVtMI0kb6nq7MRMjCqpglOJdHllUogA1ykkVv799yjXGL+ELU4bro93g6kdIsSf9aQKBgQCBZbcF8o3bA3PG6qbr4unROE0E8u4d8dbew+SNd0TgL40aQAvne7nPd6By89zKsISibryNKNvH0P0ppR+VtYMtByNWGwRqNAA0UozlOCdb96egKoHv2Zu633SRZ2yrkQtzn3qMqo3drTPLwRdzoe7sCY5++rByqpynoZs6XaPOTg==
+# Pick zero or more services to be used on all builds.
+# Only needed when using a docker container to run your tests in.
+# Check out: http://docs.gitlab.com/ce/ci/docker/using_docker_images.html#what-is-a-service
+before_script:
+  ##
+  ## Install ssh-agent if not already installed, it is required by Docker.
+  ## (change apt-get to yum if you use an RPM-based image)
+  ##
+  - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+
+  ##
+  ## Run ssh-agent (inside the build environment)
+  ##
+  - eval $(ssh-agent -s)
+
+  ##
+  ## Add the SSH key stored in SSH_PRIVATE_KEY variable to the agent store
+  ## We're using tr to fix line endings which makes ed25519 keys work
+  ## without extra base64 encoding.
+  ## https://gitlab.com/gitlab-examples/ssh-private-key/issues/1#note_48526556
+  ##
+  - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
+
+  ##
+  ## Create the SSH directory and give it the right permissions
+  ##
+  - mkdir -p ~/.ssh
+  - chmod 700 ~/.ssh
+# This folder is cached between builds
+# http://docs.gitlab.com/ce/ci/yaml/README.html#cache
+cache:
+  paths:
+  - node_modules/
+
+test1:
+  script:
+   - npm install
+   - node ./main.js
+

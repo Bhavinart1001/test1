@@ -1,0 +1,13 @@
+before_script:
+  - /var/scripts/init-deploy.sh $MYSQL_HOST $DEP_PATH $CI_PROJECT_NAME $MYSQL_PASS $CI_PROJECT_PATH $GITLAB_USER_EMAIL
+
+stages:
+  - dev
+
+git_pull_job:
+  stage: dev
+  script:
+    -  /var/scripts/git-pull.sh $DEP_PATH $CI_PROJECT_NAME $CI_PROJECT_PATH
+  environment:
+    name: test
+  when: manual

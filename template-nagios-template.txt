@@ -1,0 +1,23 @@
+#!/bin/bash
+
+VERSION=$(rabbitmqctl status | grep RabbitMQ | awk -F "," '{print $3 " " $4}' | sed 's|["}]||g')
+RPID= 
+
+output="Load Average: $loadavg | Load_1min=$load1, Load_5min=$load5, Load_15min=$load15" 
+
+if [ $load1int -le 1 -a $load5int -le 1 -a $load15int -le 1 ]
+then
+    echo "OK- $output"
+    exit 0
+elif [ $load1int -le 2 -a $load5int -le 2 -a $load15int -le 2 ]
+then
+    echo "WARNING- $output"
+    exit 1
+elif [ $load1int -gt 2 -a $load5int -gt 2 -a $load15int -gt 2 ]
+then
+    echo "CRITICAL- $output"
+    exit 2
+else
+echo "UNKNOWN- $output"
+exit 3
+fi
